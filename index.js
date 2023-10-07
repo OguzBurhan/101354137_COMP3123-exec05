@@ -6,6 +6,7 @@ const path = require('path');
 
 // Serve static files
 app.use(express.static('public'));
+app.use(express.json()); // for parsing application/json
 
 // 1. Return home.html page to client
 router.get('/home', (req, res) => {
@@ -63,6 +64,33 @@ router.get('/login', (req, res) => {
 router.get('/logout', (req, res) => {
   const { username } = req.query;
   res.send(`<b>${username} successfully logged out.</b>`);
+});
+// Add a new user 
+router.post('/addUser', (req, res) => {
+    const newUser = req.body;
+
+    fs.readFile('user.json', 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ status: 'error', message: 'Failed to read user.json' });
+        }
+
+        let users = JSON.parse(data);
+
+        // Check if users is an array. If not, make it an array.
+        if (!Array.isArray(users)) {
+            users = [users];
+        }
+
+        users.push(newUser);
+
+        fs.writeFile('user.json', JSON.stringify(users, null, 2), (err) => {
+            if (err) {
+                return res.status(500).json({ status: 'error', message: 'Failed to write to user.json' });
+            }
+
+            res.json({ status: 'success', data: newUser });
+        });
+    });
 });
 
 app.use('/', router);
